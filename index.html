@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Fuel Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            padding: 0;
+            background-color: #FFFFFF;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border: 2px solid #D71920;
+        }
+        h2 {
+            margin-bottom: 15px;
+            color: #D71920;
+            font-weight: bold;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            text-align: left;
+            position: relative;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #000;
+        }
+        input {
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #D71920;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #D71920;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            border-radius: 5px;
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ccc;
+        }
+        .autocomplete-item:hover {
+            background: #f1f1f1;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        #calculateButton {
+            background: #D71920;
+        }
+        #whatsappButton {
+            background: #25D366; /* WhatsApp green */
+        }
+        #result {
+            font-size: 18px;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #000;
+        }
+        #liters {
+            font-size: 22px;
+            font-weight: bold;
+            color: #D71920;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Aircraft Fuel Calculator</h2>
+
+        <div class="input-group">
+            <label for="minFuel">Refuel Quantity (KG):</label>
+            <input type="number" id="minFuel" placeholder="Enter refuel quantity">
+        </div>
+
+        <div class="input-group">
+            <label for="onBoard">Fuel on Board (KG):</label>
+            <input type="number" id="onBoard" placeholder="Enter fuel on board">
+        </div>
+
+        <div class="input-group">
+            <label for="density">Fuel Density (kg/L):</label>
+            <input type="number" id="density" placeholder="Enter fuel density">
+        </div>
+
+        <button id="calculateButton" onclick="calculate()">Calculate</button>
+
+        <p id="result"></p>
+        <p id="liters"></p>
+
+        <div id="regContainer" class="hidden">
+            <div class="input-group">
+                <label for="aircraftReg">Aircraft Registration:</label>
+                <input type="text" id="aircraftReg" placeholder="Enter or select aircraft registration" oninput="showSuggestions()">
+                <div id="autocompleteList" class="autocomplete-list"></div>
+            </div>
+
+            <button id="whatsappButton" onclick="sendToWhatsApp()">Send to WhatsApp</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("contextmenu", e => e.preventDefault());
+        document.addEventListener("keydown", e => {
+            if (e.ctrlKey && (e.key === "u" || e.key === "s" || e.key === "i" || e.key === "j")) e.preventDefault();
+        });
+
+        const aircraftList = [
+            "A6-ANT (ABY)", "A6-ANY (ABY)", "A6-AOB (ABY)", "A6-AOC (ABY)",
+            "A6-AOE (ABY)", "A6-AOH (ABY)", "A6-AOI (ABY)", "A6-AOJ (ABY)",
+            "A6-AOK (ABY)", "A6-AOM (ABY)", "A6-AON (ABY)", "A6-AOO (ABY)",
+            "A6-AOP (ABY)", "A6-AOQ (ABY)", "A6-AOR (ABY)", "A6-AOS (ABY)",
+            "A6-AOT (ABY)", "A6-AOU (ABY)", "A6-AOV (ABY)", "A6-AOW (ABY)",
+            "A6-AOX (ABY)", "A6-AQD (ABY)", "A6-AQE (ABY)", "A6-AQF (ABY)",
+            "A6-AQG (ABY)", "A6-AQH (ABY)", "A6-AQJ (ABY)", "A6-AQL (ABY)",
+            "A6-AQM (ABY)", "A6-AQN (ABY)", "A6-AQQ (ABY)", "A6-ATA (ABY)",
+            "A6-ATB (ABY)", "A6-ATC (ABY)", "A6-ATD (ABY)", "A6-ATE (ABY)",
+            "A6-ATF (ABY)", "A6-ATG (ABY)", "A6-ATH (ABY)", "A6-ATI (ABY)",
+            "A6-ANA (ABY)", "A6-ANB (ABY)", "A6-ANE (ABY)", "A6-ANL (ABY)",
+            "A6-ANM (ABY)", "A6-ANO (ABY)", "A6-ANP (ABY)", "A6-ANQ (ABY)",
+            "A6-ANR (ABY)", "A6-ANS (ABY)", "A6-ABM (ABY)",
+
+            "A6-AUA (ADY)", "A6-AUB (ADY)", "A6-AUC (ADY)", "A6-AUD (ADY)",
+            "A6-AUE (ADY)", "A6-AUF (ADY)", "A6-AUG (ADY)", "A6-AUI (ADY)",
+            "A6-AUJ (ADY)", "A6-AUK (ADY)",
+
+            "SU-AAD (RBG)", "SU-AAE (RBG)", "SU-AAF (RBG)", "SU-AAI (RBG)",
+
+            "AP-BMM (AIR BLUE)", "AP-BMN (AIR BLUE)", "AP-BMO (AIR BLUE)",
+            "AP-BMP (AIR BLUE)", "AP-BMW (AIR BLUE)", "AP-BNU (AIR BLUE)",
+            "AP-BNV (AIR BLUE)", "AP-BOE (AIR BLUE)", "AP-EDA (AIR BLUE)",
+            "AP-EDG (AIR BLUE)", "AP-EDH (AIR BLUE)",
+
+            "CN-NME (MAC)", "CN-NMI (MAC)", "CN-NMN (MAC)", "CN-NMO (MAC)",
+            "CN-NMP (MAC)", "CN-NMQ (MAC)", "CN-NMR (MAC)", "CN-NMS (MAC)",
+            "CN-NMT (MAC)"
+        ];
+
+        function showSuggestions() {
+            const input = document.getElementById("aircraftReg").value.toUpperCase();
+            const list = document.getElementById("autocompleteList");
+            list.innerHTML = "";
+
+            if (input.length === 0) return;
+
+            let matches = aircraftList.filter(reg => reg.toUpperCase().includes(input));
+
+            matches.forEach(reg => {
+                let item = document.createElement("div");
+                item.classList.add("autocomplete-item");
+                item.innerText = reg;
+                item.onclick = () => {
+                    document.getElementById("aircraftReg").value = reg; // Select the complete registration
+                    list.innerHTML = "";
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function calculate() {
+            let minFuel = parseFloat(document.getElementById("minFuel").value);
+            let onBoard = parseFloat(document.getElementById("onBoard").value);
+            let density = parseFloat(document.getElementById("density").value);
+
+            if (isNaN(minFuel) || isNaN(onBoard) || isNaN(density) || density <= 0) {
+                document.getElementById("result").innerText = "Please enter valid values.";
+                document.getElementById("liters").innerText = "";
+                document.getElementById("regContainer").classList.add("hidden");
+                return;
+            }
+
+            let fuelToAdd = minFuel - onBoard;
+            if (fuelToAdd <= 0) {
+                document.getElementById("result").innerText = "No additional fuel required.";
+                document.getElementById("liters").innerText = "";
+                document.getElementById("regContainer").classList.add("hidden");
+                return;
+            }
+
+            let liters = fuelToAdd / density;
+
+            document.getElementById("result").innerText = `Fuel to be added: ${fuelToAdd.toFixed(2)} KG`;
+            document.getElementById("liters").innerText = `${liters.toFixed(2)} Liters`;
+            document.getElementById("regContainer").classList.remove("hidden");
+        }
+
+        function sendToWhatsApp() {
+            const aircraftReg = document.getElementById("aircraftReg").value;
+            const liters = document.getElementById("liters").innerText;
+            const message = `Aircraft: ${aircraftReg}\nRefuel Quantity: ${liters}`;
+            const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappLink, '_blank');
+        }
+    </script>
+
+</body>
+</html>
